@@ -56,33 +56,48 @@ class CourierController extends Controller
     {
         $maxBirthDate = Carbon::now()->subYears(15)->format('Y-m-d');
 
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'nik' => 'required|digits:16|unique:couriers,nik',
-            'address' => 'required|string',
-            'phone' => 'required|string|max:20',
-            'dob' => 'required|date|before_or_equal:' . $maxBirthDate,
-            'status' => 'required|string|max:50',
-            'level' => 'required|integer|between:1,5',
-            'myUUID' => 'required|uuid'
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string',
+                'nik' => 'required|digits:16|unique:couriers,nik',
+                'address' => 'required|string',
+                'phone' => 'required|string|max:20',
+                'dob' => 'required|date|before_or_equal:' . $maxBirthDate,
+                'status' => 'required|string|max:50',
+                'level' => 'required|integer|between:1,5',
+                'myUUID' => 'required|uuid'
+            ]);
 
-        $courier = Courier::create([
-            'name' => $validated['name'],
-            'nik' => $validated['nik'],
-            'address' => $validated['address'],
-            'phone' => $validated['phone'],
-            'dob' => $validated['dob'],
-            'status' => $validated['status'],
-            'level' => $validated['level'],
-            'created_by' => $validated['myUUID']
-        ]);
+            $courier = Courier::create([
+                'name' => $validated['name'],
+                'nik' => $validated['nik'],
+                'address' => $validated['address'],
+                'phone' => $validated['phone'],
+                'dob' => $validated['dob'],
+                'status' => $validated['status'],
+                'level' => $validated['level'],
+                'created_by' => $validated['myUUID']
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Data kurir berhasil disimpan ke database.',
-            'data' => $courier
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Data kurir berhasil disimpan ke database.',
+                'data' => $courier
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan pada server.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
     }
 
     /**
@@ -91,12 +106,19 @@ class CourierController extends Controller
      */
     public function show($uuid)
     {
-        $courier = Courier::where('uuid', $uuid)->firstOrFail();
+        try {
+            $courier = Courier::where('uuid', $uuid)->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'data' => $courier
-        ], 200);
+            return response()->json([
+                'success' => true,
+                'data' => $courier
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data kurir tidak ditemukan.'
+            ], 404);
+        }
     }
 
     /**
@@ -105,36 +127,55 @@ class CourierController extends Controller
      */
     public function update(Request $request, $uuid)
     {
-        $courier = Courier::where('uuid', $uuid)->firstOrFail();
-        $maxBirthDate = Carbon::now()->subYears(15)->format('Y-m-d');
+        try {
+            $courier = Courier::where('uuid', $uuid)->firstOrFail();
+            $maxBirthDate = Carbon::now()->subYears(15)->format('Y-m-d');
 
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'nik' => 'required|digits:16|unique:couriers,nik,' . $courier->uuid . ',uuid',
-            'address' => 'required|string',
-            'phone' => 'required|string|max:20',
-            'dob' => 'required|date|before_or_equal:' . $maxBirthDate,
-            'status' => 'required|string|max:50',
-            'level' => 'required|integer|between:1,5',
-            'myUUID' => 'required|uuid'
-        ]);
+            $validated = $request->validate([
+                'name' => 'required|string',
+                'nik' => 'required|digits:16|unique:couriers,nik,' . $courier->uuid . ',uuid',
+                'address' => 'required|string',
+                'phone' => 'required|string|max:20',
+                'dob' => 'required|date|before_or_equal:' . $maxBirthDate,
+                'status' => 'required|string|max:50',
+                'level' => 'required|integer|between:1,5',
+                'myUUID' => 'required|uuid'
+            ]);
 
-        $courier->update([
-            'name' => $validated['name'],
-            'nik' => $validated['nik'],
-            'address' => $validated['address'],
-            'phone' => $validated['phone'],
-            'dob' => $validated['dob'],
-            'status' => $validated['status'],
-            'level' => $validated['level'],
-            'updated_by' => $validated['myUUID']
-        ]);
+            $courier->update([
+                'name' => $validated['name'],
+                'nik' => $validated['nik'],
+                'address' => $validated['address'],
+                'phone' => $validated['phone'],
+                'dob' => $validated['dob'],
+                'status' => $validated['status'],
+                'level' => $validated['level'],
+                'updated_by' => $validated['myUUID']
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Data kurir berhasil diperbarui di database.',
-            'data' => $courier
-        ], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Data kurir berhasil diperbarui di database.',
+                'data' => $courier
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data kurir tidak ditemukan.'
+            ], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan pada server.',
+                'error' => $e->getMessage()
+            ], 500);
+        } 
     }
 
     /**
@@ -143,12 +184,19 @@ class CourierController extends Controller
      */
     public function destroy($uuid)
     {
-        $courier = Courier::where('uuid', $uuid)->firstOrFail();
-        $courier->delete();
+        try {   
+            $courier = Courier::where('uuid', $uuid)->firstOrFail();
+            $courier->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Data kurir telah hilang dari database.'
-        ], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Data kurir telah hilang dari database.'
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data kurir tidak ditemukan.'
+            ], 404);
+        }
     }
 }

@@ -1,58 +1,114 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Courier Management API - Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Project ini adalah sebuah RESTful API untuk mengelola master data Kurir (Couriers) yang dibangun menggunakan Laravel 11. Project ini dirancang tanpa frontend dan diuji sepenuhnya menggunakan API Client (Postman) serta Automated Testing bawaan Laravel.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Fitur Utama
+* **CRUD Kurir Lengkap**: Mendukung Index, Show, Store, Update, dan Destroy.
+* **Fitur Pencarian & Filter Tingkat Lanjut**:
+  * Pencarian nama kurir yang cerdas (`?search=budi+agung` cocok dengan "Budiono Hadi Agung").
+  * Filter multi-level (`?level=2,3`).
+  * Kustomisasi pengurutan data (`?sort=date` untuk mengurutkan berdasarkan tanggal buat, default berdasarkan nama).
+  * Pagination default untuk efisiensi performa data.
+* **Keamanan & Validasi Ketat**:
+  * Validasi NIK wajib 16 digit angka dan unik.
+  * Validasi batasan umur kurir (minimal 15 tahun dari tanggal lahir/DOB).
+  * Batasan nilai Level hanya diizinkan angka 1 sampai 5.
+  * Proteksi penuh dari **SQL Injection** menggunakan *PDO Parameter Binding* bawaan Eloquent ORM.
+* **Integrasi Database & UUID**: Menggunakan UUID sebagai Primary Key yang terintegrasi dengan struktur tabel MySQL.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🛠️ Spesifikasi Tabel (`couriers`)
+Struktur data yang digunakan pada database MySQL:
+* `uuid` (CHAR 36, Primary Key)
+* `name` (TEXT)
+* `nik` (VARCHAR 16, Unique)
+* `address` (TEXT)
+* `phone` (VARCHAR 20)
+* `dob` (DATE)
+* `status` (VARCHAR 50)
+* `level` (INT, Constraint 1-5)
+* `created_at` / `updated_at` (TIMESTAMP)
+* `created_by` / `updated_by` (CHAR 36)
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 💻 Cara Instalasi & Menjalankan Project
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
+1. Clone Repository
 ```bash
-composer require laravel/boost --dev
+git clone https://github.com/Wirahman/gradin
+cd gradin
 
-php artisan boost:install
-```
+2. Instalasi Dependensi Composer
+composer install
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+3. Konfigurasi Environment File
+Buka file .env dan sesuaikan pengaturan database Anda:
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=gradin
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Contributing
+4. Generate Application Key & Jalankan Migrasi
+php artisan key:generate
+php artisan migrate
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+🧪 Cara Menjalankan Automated Testing
+php artisan test
 
-## Code of Conduct
+📑 Dokumentasi Endpoint API
+Semua request wajib menyertakan header berikut agar respon error berupa JSON:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Header: Accept = application/json
 
-## Security Vulnerabilities
+1. Get All Couriers (Index)
+Method: GET
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+URL: /api/couriers
 
-## License
+Query Params (Opsional):
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+?search=budi+agung (Mencari kurir bersesuaian nama)
+
+?level=2,3 (Filter level tertentu)
+
+?sort=date (Mengubah urutan berdasarkan tanggal dibuat)
+
+2. Get Detail Courier (Show)
+Method: GET
+
+URL: /api/couriers/{uuid}
+
+3. Create Courier (Store)
+Method: POST
+
+URL: /api/couriers
+
+Body (JSON):
+{
+    "myUUID": "f4e3d2c1-b0a9-9876-5432-10fedcba9876",
+    "name": "Budiono Hadi Agung",
+    "nik": "1234567890123456",
+    "address": "Jl. Merdeka No. 10, Jakarta",
+    "phone": "081234567890",
+    "dob": "2000-01-01",
+    "status": "Active",
+    "level": 3
+}
+
+4. Update Courier (Update)
+Method: PUT
+
+URL: /api/couriers/{uuid}
+
+Body (JSON): Sama seperti struktur Create Courier.
+
+5. Delete Courier (Destroy)
+Method: DELETE
+
+URL: /api/couriers/{uuid}
